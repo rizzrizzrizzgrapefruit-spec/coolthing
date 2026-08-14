@@ -1,0 +1,862 @@
+
+
+
+<!DOCTYPE html>
+<iframe width="300" height="154" src="https://w2.countingdownto.com/7054999" frameborder="0"></iframe>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game Loader Preview</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #111;
+            font-family: Arial, sans-serif;
+        }
+        .contact-info {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .go-button {
+            padding: 15px 40px;
+            background: #4a148c;
+            color: gold;
+            border: 2px solid gold;
+            border-radius: 8px;
+            font: bold 20px Arial, sans-serif;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .go-button:hover {
+            background: #6a1b9a;
+            transform: scale(1.1);
+        }
+      #html-container {
+    display: none;
+    position: absolute;
+    top: 60px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(100vh - 60px);
+    background: #1a1a1a;
+    padding: 15px;
+    box-sizing: border-box;
+    z-index: 60;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+}
+
+#html-header {
+    color: gold;
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#html-code {
+    display: block;
+    width: 100%;
+    min-height: 200px;
+    height: 200px;
+    background: #111;
+    color: white;
+    border: 2px solid #4a148c;
+    border-radius: 6px;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: monospace;
+    resize: vertical;
+    flex: 0 0 auto;
+}
+
+#html-buttons {
+    margin: 0;
+    display: flex;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+#html-preview {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border: none;
+    background: white;
+}
+    </style>
+</head>
+<body>
+
+<div class="contact-info">G+ contact zzzjz510@gmail.com for game suggestions/fixes.</div>
+<button class="go-button" onclick="launchLoader()">GO</button>
+
+<script>
+function launchLoader() {
+    const loaderCode = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Tab</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"><\/script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"><\/script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background-color: #111; font-family: Arial, sans-serif; }
+        
+        .control-panel { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: #1a1a1a; display: flex; 
+            justify-content: center; align-items: center; gap: 15px; z-index: 99999;
+            border-bottom: 2px solid #4a148c; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow: hidden;
+        }
+
+        .watermark-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex;
+            align-items: center; justify-content: space-around; pointer-events: none; z-index: 0;
+            color: rgba(255, 0, 0, 0.15); font-size: 35px; font-weight: 900; white-space: nowrap; letter-spacing: 20px;
+        }
+        
+        .left-controls { position: absolute; left: 15px; display: flex; gap: 10px; align-items: center; z-index: 2; }
+        .right-controls { position: absolute; right: 15px; display: flex; align-items: center; z-index: 2; }
+
+        .btn-group { display: flex; align-items: center; gap: 5px; z-index: 2; }
+        .load-btn { background: #4a148c; color: white; border: 1px solid gold; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; font-weight: bold; transition: all 0.2s; white-space: nowrap; }
+        .load-btn:hover { background: #6a1b9a; transform: scale(1.02); }
+        .load-btn.active { background: #2e7d32; border-color: #81c784; }
+        
+        .nav-btn { background: #00bcd4; color: black; border: 1px solid #00acc1; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 11px; font-weight: bold; transition: all 0.2s; }
+        .nav-btn:hover { background: #26c6da; transform: scale(1.05); }
+
+        .unload-btn { background: #b71c1c; color: white; border: 1px solid #ff5252; padding: 6px 10px; cursor: pointer; border-radius: 4px; font-size: 11px; font-weight: bold; transition: all 0.2s; }
+        
+        .grid-container { position: absolute; top: 60px; bottom: 0; left: 0; right: 0; background-color: #4a148c; }
+
+        .page { display: none; width: 100%; height: 100%; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 4px; }
+        .page.active { display: grid; }
+        
+        .slot { position: relative; background: #111; width: 100%; height: 100%; }
+        
+        .load-status-msg {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #555; font-size: 14px; text-align: center; pointer-events: none; z-index: 1;
+        }
+
+        iframe { position: relative; width: 100%; height: 100%; border: none; background: transparent; z-index: 2; }
+
+        .corner-id { position: absolute; top: 0; left: 0; color: rgba(255,255,255,0.2); font-size: 10px; padding: 5px; pointer-events: none; z-index: 10; }
+        .page-indicator { color: #00bcd4; font-size: 12px; font-weight: bold; margin: 0 10px; }
+
+        #chat-container {
+            display: none; position: absolute; top: 60px; bottom: 0; left: 0; right: 0;
+            background: #1a1a1a; flex-direction: row; padding: 20px; box-sizing: border-box; z-index: 50; gap: 20px;
+        }
+        #chat-main { display: flex; flex-direction: column; flex-grow: 1; height: 100%; }
+        #chat-header {
+            color: gold; margin-bottom: 15px; display: flex; justify-content: space-between;
+            align-items: center; font-weight: bold; font-size: 18px;
+        }
+        #chat-messages {
+            position: relative; flex-grow: 1; background: #111; color: white; overflow-y: auto;
+            padding: 15px; border: 2px solid #4a148c; border-radius: 8px; margin-bottom: 15px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .chat-msg { 
+    background: #222; 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    max-width: 1000px;   /* 👈 controls when it wraps */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+        .chat-username { font-weight: bold; margin-right: 5px; }
+        #chat-input-area { display: flex; gap: 10px; }
+        #chat-input {
+            flex-grow: 1; padding: 12px; background: #111; color: white; border: 2px solid #4a148c;
+            border-radius: 6px; font-size: 14px;
+        }
+        #chat-input:focus { outline: none; border-color: gold; }
+
+        /* Online Members List Styles */
+        #online-list-container {
+            width: 200px; background: #111; border: 2px solid #4a148c; border-radius: 8px;
+            display: flex; flex-direction: column; padding: 10px;
+        }
+        #online-list-header { color: gold; font-weight: bold; font-size: 14px; margin-bottom: 10px; border-bottom: 1px solid #4a148c; padding-bottom: 5px; }
+        #online-members { flex-grow: 1; overflow-y: auto; color: white; font-size: 12px; display: flex; flex-direction: column; gap: 5px; }
+        .online-user { display: flex; align-items: center; gap: 5px; }
+        .online-dot { width: 8px; height: 8px; background: #2e7d32; border-radius: 50%; }
+
+        #name-color-picker { vertical-align: middle; border: 1px solid gold; background: #111; cursor: pointer; width: 30px; height: 30px; padding: 0; border-radius: 4px; }
+
+        #scroll-bottom-btn {
+            display: none; position: absolute; bottom: 85px; left: 50%; transform: translateX(-50%);
+            background: #2e7d32; color: white; border: 2px solid #81c784; padding: 10px 20px;
+            border-radius: 50px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        
+        #clear-chat-btn { background: #b71c1c; color: white; border: 1px solid #ff5252; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .data-btn { background: #4a148c; color: white; border: 1px solid gold; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; font-size: 12px; }
+
+        #html-container {
+            display: none;
+            position: absolute;
+            top: 60px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1a1a1a;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 60;
+            flex-direction: column;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        #html-header {
+            color: gold;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: 0 0 auto;
+        }
+
+        #html-code {
+            display: block;
+            width: 100%;
+            min-height: 220px;
+            height: 220px;
+            background: #111;
+            color: white;
+            border: 2px solid #4a148c;
+            border-radius: 6px;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: monospace;
+            resize: vertical;
+            flex: 0 0 auto;
+        }
+
+        #html-buttons {
+            display: flex;
+            gap: 10px;
+            flex: 0 0 auto;
+        }
+
+        #html-preview {
+            display: block;
+            width: 100%;
+            min-height: 0;
+            flex: 1 1 auto;
+            border: none;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="control-panel">
+    <div class="watermark-bg">G+ G+ G+ G+ G+ G+ G+ G+ G+ G+</div>
+    <div class="left-controls">
+        <button class="load-btn" onclick="renameTab()">RENAME TAB</button>
+        <button class="nav-btn" onclick="changePage(-1)">< PREV</button>
+        <button class="nav-btn" id="chat-btn" onclick="toggleChat()" style="background: #ff9800; border-color: #e65100; color: white;">💬 CHAT</button>
+        <button class="nav-btn" id="html-btn" onclick="toggleHTML()" style="background: #2196f3; border-color: #0d47a1; color: white;">💻 HTML</button>
+    </div>
+    
+    <div id="controls-pg1" class="btn-group page-controls">
+        <div class="btn-group" id="group-1"><button class="load-btn" onclick="loadGame(1, this, 'MC 1.20')">LOAD MC 1.20</button></div>
+        <div class="btn-group" id="group-2"><button class="load-btn" onclick="loadGame(2, this, 'MC 1.8.8')">LOAD MC 1.8.8</button></div>
+        <div class="btn-group" id="group-3"><button class="load-btn" onclick="loadGame(3, this, 'POLYTRACK')">LOAD POLYTRACK</button></div>
+        <div class="btn-group" id="group-4"><button class="load-btn" onclick="loadGame(4, this, 'B-STARS')">LOAD B-STARS</button></div>
+        <div class="btn-group" id="group-5"><button class="load-btn" onclick="loadGame(5, this, 'FNAF 4')">LOAD FNAF 4</button></div>
+        <div class="btn-group" id="group-6"><button class="load-btn" onclick="loadGame(6, this, 'MARIO 64')">LOAD MARIO 64</button></div>
+    </div>
+
+    <div id="controls-pg2" class="btn-group page-controls" style="display:none;">
+        <div class="btn-group" id="group-7"><button class="load-btn" onclick="loadGame(7, this, 'SLOPE 2P')">LOAD SLOPE 2P</button></div>
+        <div class="btn-group" id="group-8"><button class="load-btn" onclick="loadGame(8, this, 'FNAE')">LOAD FNAE</button></div>
+        <span style="color: #555;">(Slots 9-12 empty)</span>
+    </div>
+    <div id="controls-pg3" class="btn-group page-controls" style="display:none; color: #555;">(Page 3 - Empty)</div>
+    <div id="controls-pg4" class="btn-group page-controls" style="display:none; color: #555;">(Page 4 - Empty)</div>
+    <div id="controls-pg5" class="btn-group page-controls" style="display:none; color: #555;">(Page 5 - Empty)</div>
+
+    <div class="right-controls">
+        <span class="page-indicator" id="pg-num">PAGE 1/5</span>
+        <button class="nav-btn" onclick="changePage(1)">NEXT ></button>
+    </div>
+</div>
+
+<div class="grid-container">
+    <div id="page-1" class="page active">
+        <div class="slot"><span class="corner-id">Slot 1</span><div class="load-status-msg" id="status-1">MC 1.20 ready to load. click the load button</div><iframe id="corner-1"></iframe></div>
+        <div class="slot"><span class="corner-id">Slot 2</span><div class="load-status-msg" id="status-2">MC 1.8.8 ready to load. click the load button</div><iframe id="corner-2"></iframe></div>
+        <div class="slot"><span class="corner-id">Slot 3</span><div class="load-status-msg" id="status-3">POLYTRACK ready to load. click the load button. If it doesnt load, try loading all the other games at the same time and it should work. If not re open G+ and try that again</div><iframe id="corner-3"></iframe></div>
+        <div class="slot"><span class="corner-id">Slot 4</span><div class="load-status-msg" id="status-4">Basketball Stars ready to load. click the load button</div><iframe id="corner-4"></iframe></div>
+        <div class="slot"><span class="corner-id">Slot 5</span><div class="load-status-msg" id="status-5">FNAF 4 ready to load. click the load button</div><iframe id="corner-5"></iframe></div>
+        <div class="slot"><span class="corner-id">Slot 6</span><div class="load-status-msg" id="status-6">Mario Kart 64 ready to load. click the load button</div><iframe id="corner-6"></iframe></div>
+    </div>
+    <div id="page-2" class="page"><div class="slot"><span class="corner-id">Slot 7</span><div class="load-status-msg" id="status-7">Slope 2 Player ready to load. click the load button</div><iframe id="corner-7"></iframe></div><div class="slot"><span class="corner-id">Slot 8</span><div class="load-status-msg" id="status-8">FNAE ready to load. click the load button</div><iframe id="corner-8"></iframe></div><div class="slot"><span class="corner-id">Slot 9</span><div class="load-status-msg">Empty Slot 9</div><iframe id="corner-9"></iframe></div><div class="slot"><span class="corner-id">Slot 10</span><div class="load-status-msg">Empty Slot 10</div><iframe id="corner-10"></iframe></div><div class="slot"><span class="corner-id">Slot 11</span><div class="load-status-msg">Empty Slot 11</div><iframe id="corner-11"></iframe></div><div class="slot"><span class="corner-id">Slot 12</span><div class="load-status-msg">Empty Slot 12</div><iframe id="corner-12"></iframe></div></div>
+    <div id="page-3" class="page"><div class="slot"><span class="corner-id">Slot 13</span><div class="load-status-msg">Empty Slot 13</div><iframe id="corner-13"></iframe></div><div class="slot"><span class="corner-id">Slot 14</span><div class="load-status-msg">Empty Slot 14</div><iframe id="corner-14"></iframe></div><div class="slot"><span class="corner-id">Slot 15</span><div class="load-status-msg">Empty Slot 15</div><iframe id="corner-15"></iframe></div><div class="slot"><span class="corner-id">Slot 16</span><div class="load-status-msg">Empty Slot 16</div><iframe id="corner-16"></iframe></div><div class="slot"><span class="corner-id">Slot 17</span><div class="load-status-msg">Empty Slot 17</div><iframe id="corner-17"></iframe></div><div class="slot"><span class="corner-id">Slot 18</span><div class="load-status-msg">Empty Slot 18</div><iframe id="corner-18"></iframe></div></div>
+    <div id="page-4" class="page"><div class="slot"><span class="corner-id">Slot 19</span><div class="load-status-msg">Empty Slot 19</div><iframe id="corner-19"></iframe></div><div class="slot"><span class="corner-id">Slot 20</span><div class="load-status-msg">Empty Slot 20</div><iframe id="corner-20"></iframe></div><div class="slot"><span class="corner-id">Slot 21</span><div class="load-status-msg">Empty Slot 21</div><iframe id="corner-21"></iframe></div><div class="slot"><span class="corner-id">Slot 22</span><div class="load-status-msg">Empty Slot 22</div><iframe id="corner-22"></iframe></div><div class="slot"><span class="corner-id">Slot 23</span><div class="load-status-msg">Empty Slot 23</div><iframe id="corner-23"></iframe></div><div class="slot"><span class="corner-id">Slot 24</span><div class="load-status-msg">Empty Slot 24</div><iframe id="corner-24"></iframe></div></div>
+    <div id="page-5" class="page"><div class="slot"><span class="corner-id">Slot 25</span><div class="load-status-msg">Empty Slot 25</div><iframe id="corner-25"></iframe></div><div class="slot"><span class="corner-id">Slot 26</span><div class="load-status-msg">Empty Slot 26</div><iframe id="corner-26"></iframe></div><div class="slot"><span class="corner-id">Slot 27</span><div class="load-status-msg">Empty Slot 27</div><iframe id="corner-27"></iframe></div><div class="slot"><span class="corner-id">Slot 28</span><div class="load-status-msg">Empty Slot 28</div><iframe id="corner-28"></iframe></div><div class="slot"><span class="corner-id">Slot 29</span><div class="load-status-msg">Empty Slot 29</div><iframe id="corner-29"></iframe></div><div class="slot"><span class="corner-id">Slot 30</span><div class="load-status-msg">Empty Slot 30</div><iframe id="corner-30"></iframe></div></div>
+</div>
+
+<div id="chat-container">
+    <div id="chat-main">
+        <div id="chat-header">
+            <span>G+ Global Chat (Live)------------------------------------------------------------------------------ ANNOUNCEMENTS: the chat says when people join but doesnt rly when they leave js so u know, also for the online members (ill fix it soon)</span>
+            <div style="display: flex; align-items: center; gap: 8px;"> 
+             <button id="notif-btn" class="data-btn" onclick="toggleNotifications()">ENABLE DESKTOP NOTIFICATIONS</button>
+                <button class="data-btn" onclick="exportData()">EXPORT DATA</button>
+                <button class="data-btn" onclick="document.getElementById('import-file').click()">IMPORT DATA</button>
+                <input type="file" id="import-file" style="display:none" onchange="importData(event)">
+                <button id="clear-chat-btn" onclick="clearChatLocally()">CLEAR CHAT FOR ME</button>
+                <span style="color: white; font-size: 14px;">USER: <span id="current-username" style="color: gold;">unnamed</span></span>
+                <input type="color" id="name-color-picker" title="Change Name Color" value="#00bcd4">
+                <button onclick="changeName()" style="background:#4a148c; color:white; border:1px solid gold; border-radius:4px; padding:5px 10px; cursor:pointer; font-weight:bold;">EDIT</button>
+            </div>
+        </div>
+        <div id="chat-messages" onscroll="handleChatScroll()"></div>
+        <button id="scroll-bottom-btn" onclick="scrollToBottom()">⬇ JUMP TO BOTTOM</button>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message..." onkeypress="if(event.key === 'Enter') sendMsg()">
+            <button onclick="sendMsg()" class="load-btn" style="font-size: 14px; padding: 0 20px;">SEND</button>
+        </div>
+    </div>
+    <div id="online-list-container">
+        <div id="online-list-header">ONLINE MEMBERS</div>
+        <div id="online-members"></div>
+    </div>
+</div>
+<div id="html-container">
+    <div id="html-header">
+        <span>HTML RUNNER</span>
+        <button onclick="toggleHTML()" class="data-btn">BACK</button>
+    </div>
+
+    <textarea id="html-code" placeholder="Enter your HTML code here..."></textarea>
+
+    <div id="html-buttons">
+        <button onclick="runHTML()" class="load-btn">RUN PREVIEW</button>
+        <button onclick="openHTMLFull()" class="load-btn">OPEN FULLSCREEN</button>
+    </div>
+
+    <iframe id="html-preview"></iframe>
+</div>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDkXZSjOfX7SXs-VKhhH494vC2_a4cYkI0",
+      authDomain: "gplus-d648d.firebaseapp.com",
+      projectId: "gplus-d648d",
+      storageBucket: "gplus-d648d.firebasestorage.app",
+      messagingSenderId: "117379305028",
+      appId: "1:117379305028:web:591bb120af032a2de13611",
+      measurementId: "G-2XYBQVS9RE",
+      databaseURL: "https://gplus-d648d-default-rtdb.firebaseio.com"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+const chatRef = db.ref('messages');
+const presenceRef = db.ref('presence');
+const myPresenceRef = presenceRef.push();
+
+// ✅ ADD THIS RIGHT HERE
+const connectedRef = db.ref(".info/connected");
+
+connectedRef.on("value", (snap) => {
+    if (snap.val() === true) {
+        myPresenceRef.set({
+            username: username,
+            color: document.getElementById('name-color-picker').value
+        });
+
+        myPresenceRef.onDisconnect().remove();
+
+// SEND LEAVE MESSAGE ON DISCONNECT
+let previousUsers = {};
+myPresenceRef.onDisconnect().set(null);
+
+    }
+});
+
+    chatRef.limitToLast(50).on('child_added', (snapshot) => {
+        const data = snapshot.val();
+        // SEND NOTIFICATION
+if (notificationsEnabled ) {
+    const messageText = data.message ? data.message : "[Image]";
+    
+    new Notification(data.username, {
+    body: messageText,
+    icon: "data:image/png;base64,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xlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnBWEqSlGAsJUlKMJaSJCUYS0mSEoylJEkJxlKSpARjKUlSgrGUJCnhfwExnQyCQh5h0AAAAABJRU5ErkJggg=="
+});
+}
+        const chatBox = document.getElementById('chat-messages');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg';
+        msgDiv.id = 'msg-' + snapshot.key;
+        const userColor = data.color || "#00bcd4";
+        // TIME
+const time = new Date(data.timestamp);
+const formattedTime = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit'  });
+
+const timeSpan = document.createElement('span');
+timeSpan.style.color = '#888';
+timeSpan.style.marginRight = '6px';
+timeSpan.textContent = '[' + formattedTime + ']';
+
+// USERNAME
+const nameSpan = document.createElement('span');
+nameSpan.className = 'chat-username';
+nameSpan.style.color = userColor;
+nameSpan.textContent = data.username + ':';
+
+// ADD ORDER: TIME → NAME
+msgDiv.appendChild(timeSpan);
+msgDiv.appendChild(nameSpan);
+
+// TEXT
+if (data.message) {
+    const textSpan = document.createElement('span');
+    textSpan.className = 'chat-text';
+
+    if (data.system) {
+        textSpan.style.color = data.color || "lime";
+        textSpan.style.fontWeight = 'bold';
+        textSpan.textContent = data.message;
+    } else {
+        textSpan.textContent = ' ' + data.message;
+    }
+
+    msgDiv.appendChild(textSpan);
+}
+
+// IMAGE
+if (data.image) {
+    const img = document.createElement('img');
+    img.src = data.image;
+    img.style.maxWidth = '200px';
+    img.style.display = 'block';
+    img.style.marginTop = '5px';
+    img.style.borderRadius = '6px';
+    msgDiv.appendChild(img);
+}
+        chatBox.appendChild(msgDiv);
+        if (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight < 150) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    });
+
+    chatRef.on('child_removed', (snapshot) => {
+        const el = document.getElementById('msg-' + snapshot.key);
+        if(el) el.remove();
+    });
+
+    // Presence Logic
+  presenceRef.on('value', (snapshot) => {
+    const onlineDiv = document.getElementById('online-members');
+    onlineDiv.innerHTML = '';
+
+    const currentUsers = {};
+
+    snapshot.forEach((child) => {
+        const user = child.val();
+        currentUsers[child.key] = user;
+
+        // SHOW USER IN LIST
+        const uDiv = document.createElement('div');
+        uDiv.className = 'online-user';
+        uDiv.innerHTML =
+            '<div class="online-dot"></div>' +
+            '<span style="color:' + (user.color || 'white') + '">' +
+            user.username +
+            '</span>';
+
+        onlineDiv.appendChild(uDiv);
+
+        // 🟢 JOIN DETECT (ONLY IF NOT FIRST LOAD)
+        if (!previousUsers[child.key] && Object.keys(previousUsers).length > 0) {
+          
+        }
+    });
+
+    // 🔴 LEAVE DETECT
+    for (let key in previousUsers) {
+        if (!currentUsers[key]) {
+            const user = previousUsers[key];
+
+
+        
+        }
+    }
+
+    // SAVE STATE
+    previousUsers = currentUsers;
+});
+
+    let currentPage = 1;
+    const totalPages = 5;
+    let isChatOpen = false;
+    let username = localStorage.getItem('username') || "unnamed";
+let notificationsEnabled = false;
+    function updatePresence() {
+        myPresenceRef.set({ username: username, color: document.getElementById('name-color-picker').value });
+        myPresenceRef.onDisconnect().remove();
+    }
+
+    // SAVE COLOR WHEN CHANGED
+document.getElementById('name-color-picker').addEventListener('input', function() {
+    localStorage.setItem('userColor', this.value);
+    updatePresence();
+});
+// LOAD SAVED SETTINGS
+
+// Username display
+document.getElementById('current-username').innerText = username;
+
+// Color
+const savedColor = localStorage.getItem('userColor');
+if (savedColor) {
+    document.getElementById('name-color-picker').value = savedColor;
+}
+
+// Notifications
+const savedNotif = localStorage.getItem('notificationsEnabled');
+if (savedNotif === 'true') {
+    notificationsEnabled = true;
+    const btn = document.getElementById('notif-btn');
+    if (btn) btn.textContent = "DISABLE DESKTOP NOTIFICATIONS";
+}
+    function handleChatScroll() {
+        const chatBox = document.getElementById('chat-messages');
+        const scrollBtn = document.getElementById('scroll-bottom-btn');
+        if (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight > 150) {
+            scrollBtn.style.display = 'block';
+        } else {
+            scrollBtn.style.display = 'none';
+        }
+    }
+
+    function scrollToBottom() {
+        const chatBox = document.getElementById('chat-messages');
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+    }
+
+   function clearChatLocally() { 
+    document.getElementById('chat-messages').innerHTML = ''; 
+}
+
+// ✅ PUT IT HERE
+function cleanupOldMessages() {
+    const cutoff = Date.now() - (24 * 60 * 60 * 1000); // 24 hours
+
+    chatRef.orderByChild('timestamp').endAt(cutoff).once('value', (snapshot) => {
+        snapshot.forEach((child) => {
+            child.ref.remove();
+        });
+    });
+}
+
+    function changePage(dir) {
+        if(isChatOpen) toggleChat();
+        document.getElementById(\`page-\${currentPage}\`).classList.remove('active');
+        document.getElementById(\`controls-pg\${currentPage}\`).style.display = 'none';
+        currentPage += dir;
+        if(currentPage < 1) currentPage = totalPages;
+        if(currentPage > totalPages) currentPage = 1;
+        document.getElementById(\`page-\${currentPage}\`).classList.add('active');
+        document.getElementById(\`controls-pg\${currentPage}\`).style.display = 'flex';
+        document.getElementById('pg-num').innerText = "PAGE " + currentPage + "/5";
+    }
+
+    function renameTab() {
+        const newName = prompt("Enter new tab name:", document.title);
+        if (newName !== null && newName !== "") { document.title = newName; }
+    }
+
+    function toggleChat() {
+        isChatOpen = !isChatOpen;
+        const chatContainer = document.getElementById('chat-container');
+        const gridContainer = document.querySelector('.grid-container');
+        const chatBtn = document.getElementById('chat-btn');
+        const pageControls = document.getElementById(\`controls-pg\${currentPage}\`);
+        if(isChatOpen) {
+        // SEND JOIN MESSAGE
+
+
+            cleanupOldMessages();
+            chatContainer.style.display = 'flex';
+            gridContainer.style.display = 'none';
+            if(pageControls) pageControls.style.display = 'none';
+            chatBtn.innerText = 'BACK TO GAMES';
+            chatBtn.style.background = '#b71c1c';
+            chatBtn.style.borderColor = '#ff5252';
+            const input = document.getElementById('chat-input');
+            if(input) input.focus();
+            setTimeout(() => {
+                const chatBox = document.getElementById('chat-messages');
+                if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+            }, 50);
+        } else {
+            chatContainer.style.display = 'none';
+            gridContainer.style.display = 'block';
+            if(pageControls) pageControls.style.display = 'flex';
+            chatBtn.innerText = '💬 CHAT';
+            chatBtn.style.background = '#ff9800';
+            chatBtn.style.borderColor = '#e65100';
+        }
+    }
+let isHTMLOpen = false;
+
+function toggleHTML() {
+    isHTMLOpen = !isHTMLOpen;
+
+    const htmlContainer = document.getElementById('html-container');
+    const gridContainer = document.querySelector('.grid-container');
+    const chatContainer = document.getElementById('chat-container');
+    const chatBtn = document.getElementById('chat-btn');
+    const pageControls = document.getElementById('controls-pg' + currentPage);
+
+    if (isHTMLOpen) {
+        htmlContainer.style.display = 'flex';
+        gridContainer.style.display = 'none';
+        chatContainer.style.display = 'none';
+        if (pageControls) pageControls.style.display = 'none';
+        isChatOpen = false;
+        chatBtn.innerText = '💬 CHAT';
+        chatBtn.style.background = '#ff9800';
+        chatBtn.style.borderColor = '#e65100';
+    } else {
+        htmlContainer.style.display = 'none';
+        gridContainer.style.display = 'block';
+        if (pageControls) pageControls.style.display = 'flex';
+    }
+}
+    function changeName() {
+        const newName = prompt("Enter your username:", username);
+        if(newName && newName.trim() !== "") {
+            username = newName.trim();
+            localStorage.setItem('username', username);
+            document.getElementById('current-username').innerText = username;
+            updatePresence();
+        }
+    }
+
+    function sendMsg() {
+        cleanupOldMessages();
+        const input = document.getElementById('chat-input');
+        const colorInput = document.getElementById('name-color-picker');
+        const msg = input.value.trim();
+        if(msg !== "") {
+            chatRef.push({
+                username: username,
+                message: msg,
+                color: colorInput.value,
+                timestamp: Date.now()
+            });
+            input.value = '';
+        }
+    }
+function sendImage(base64Image) {
+    const colorInput = document.getElementById('name-color-picker');
+
+    chatRef.push({
+        username: username,
+        image: base64Image,
+        color: colorInput.value,
+        timestamp: Date.now()
+    });
+}
+
+
+function toggleNotifications() {
+    const btn = document.getElementById('notif-btn');
+
+    if (!("Notification" in window)) {
+        alert("Your browser does not support notifications.");
+        return;
+    }
+
+    // TURN ON
+    if (!notificationsEnabled) {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                notificationsEnabled = true;
+                localStorage.setItem('notificationsEnabled', 'true');
+                btn.textContent = "DISABLE DESKTOP NOTIFICATIONS";
+                alert("Notifications enabled!");
+            } else {
+                alert("Notifications denied.");
+            }
+        });
+    } 
+    // TURN OFF
+    else {
+        notificationsEnabled = false;
+        localStorage.setItem('notificationsEnabled', 'false');
+        btn.textContent = "ENABLE DESKTOP NOTIFICATIONS";
+        alert("Notifications disabled.");
+    }
+}
+    function exportData() {
+        const data = {
+            username: username,
+            color: document.getElementById('name-color-picker').value,
+            tabTitle: document.title
+        };
+        const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'gplus_data.json';
+        a.click();
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(data.username) {
+                    username = data.username;
+                    document.getElementById('current-username').innerText = username;
+                }
+                if(data.color) {
+                    document.getElementById('name-color-picker').value = data.color;
+                }
+                if(data.tabTitle) {
+                    document.title = data.tabTitle;
+                }
+                updatePresence();
+                alert("Data imported successfully!");
+            } catch(err) { alert("Error importing data."); }
+        };
+        reader.readAsText(file);
+    }
+// PASTE IMAGE FROM CLIPBOARD
+document.getElementById('chat-input').addEventListener('paste', function(event) {
+    const items = event.clipboardData.items;
+
+    for (let i = 0; i < items.length; i++) {
+        if (items[i].type.includes("image")) {
+            const file = items[i].getAsFile();
+
+            // size limit (prevents lag)
+            if (file.size > 400000) {
+                alert("Image too large! Keep it under ~400KB.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                sendImage(e.target.result);
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+function runHTML() {
+    const code = document.getElementById('html-code').value;
+    const iframe = document.getElementById('html-preview');
+
+    iframe.srcdoc = code;
+}
+
+function openHTMLFull() {
+    const code = document.getElementById('html-code').value;
+
+    const newWindow = window.open();
+    newWindow.document.open();
+    newWindow.document.write(code);
+    newWindow.document.close();
+}
+    // --- GAME CODES ---
+    const code1 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } #fs-preview-btn { bottom: 60px; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">MC</span><span id="intro-text-2" class="intro-message">enjoy</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" allow="fullscreen; pointer-lock" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (MC 1.20) contact zzzjz510@gmail.com for game suggestions/fixes.</p><button id="fs-preview-btn" class="fullscreen-button" type="button" onclick="toggleBrowserFullscreen(); this.blur();">TOGGLE FULLSCREEN</button><button id="fs-btn" class="fullscreen-button" type="button" onclick="openFullscreen(); this.blur();">OPEN UNDETECTABLE</button></div><script>const ENCODED_URL = 'aHR0cHM6Ly9ydXNlbGxvMjUuZ2l0aHViLmlvL0VhZ2x5TUMtMS4yMC8='; const DB_NAME = 'GameCacheDB'; const STORE_NAME = 'GameFiles'; const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000; function getFileUrl() { try { return atob(ENCODED_URL); } catch (e) { return ''; } } function openDB() { return new Promise((resolve, reject) => { const request = indexedDB.open(DB_NAME, 1); request.onupgradeneeded = (event) => { const db = event.target.result; db.createObjectStore(STORE_NAME, { keyPath: 'url' }); }; request.onsuccess = (event) => resolve(event.target.result); request.onerror = (event) => reject(event.target.error); }); } async function saveToCache(url, content) { const db = await openDB(); const transaction = db.transaction(STORE_NAME, 'readwrite'); transaction.objectStore(STORE_NAME).put({ url: url, content: content, timestamp: Date.now() }); } async function getFileFromCache(url) { const db = await openDB(); return new Promise((resolve, reject) => { const transaction = db.transaction(STORE_NAME, 'readonly'); const request = transaction.objectStore(STORE_NAME).get(url); request.onsuccess = async (event) => { const data = event.target.result; if (data && (Date.now() - data.timestamp) < CACHE_DURATION) { resolve(data.content); } else { try { const response = await fetch(url); const text = await response.text(); await saveToCache(url, text); resolve(text); } catch (err) { reject(err); } } }; }); } function getGameLockTarget() { const iframe = document.getElementById("fr"); if (!iframe || iframe.style.display === "none") { return null; } try { const doc = iframe.contentDocument; if (!doc) { return null; } return doc.querySelector("canvas, #canvas, #game, [tabindex]") || doc.body || doc.documentElement; } catch (e) { return null; } } function refocusGame() { const iframe = document.getElementById("fr"); if (iframe && iframe.style.display !== "none") { try { iframe.contentWindow.focus(); } catch (e) {} iframe.focus(); } } function requestGamePointerLock() { const target = getGameLockTarget(); if (!target) { return; } try { if (typeof target.focus === "function") { target.focus({ preventScroll: true }); } } catch (e) {} const requestLock = target.requestPointerLock || target.mozRequestPointerLock || target.webkitRequestPointerLock; if (requestLock) { try { requestLock.call(target); } catch (e) {} } } function keepGameLocked() { [0, 120, 300, 600].forEach((delay) => { setTimeout(() => { refocusGame(); requestGamePointerLock(); }, delay); }); } function attachGameLockHandlers() { const iframe = document.getElementById("fr"); if (!iframe || iframe.style.display === "none") { return; } try { const doc = iframe.contentDocument; if (!doc || !doc.documentElement || doc.documentElement.dataset.lockHandlersAttached === "true") { return; } doc.documentElement.dataset.lockHandlersAttached = "true"; const relock = () => { if (document.fullscreenElement) { keepGameLocked(); } }; ["click", "mousedown", "keydown"].forEach((eventName) => doc.addEventListener(eventName, relock, true)); } catch (e) {} } function toggleBrowserFullscreen() { const fullscreenPromise = !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); keepGameLocked(); Promise.resolve(fullscreenPromise).then(() => { keepGameLocked(); }).catch(() => { keepGameLocked(); }); } document.addEventListener("fullscreenchange", () => { if (document.fullscreenElement) { keepGameLocked(); } }); function PlayTo(button) { const fileUrl = getFileUrl(); const iframe = document.getElementById("fr"); const fsBtn = document.getElementById("fs-btn"); const previewBtn = document.getElementById("fs-preview-btn"); getFileFromCache(fileUrl).then((text) => { iframe.contentDocument.open(); iframe.contentDocument.write(text); iframe.contentDocument.close(); iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; if(previewBtn) previewBtn.style.display = "none"; setTimeout(() => { attachGameLockHandlers(); keepGameLocked(); }, 500); fsBtn.innerHTML = "TOGGLE FULLSCREEN"; fsBtn.onclick = function() { toggleBrowserFullscreen(); this.blur(); }; }).catch((err) => { alert('Could not load game content.'); }); } function openFullscreen() { const fileUrl = getFileUrl(); getFileFromCache(fileUrl).then((text) => { const newWindow = window.open("", "_blank"); if (newWindow) { newWindow.document.open(); newWindow.document.write(text); newWindow.document.close(); newWindow.document.title = "Google Drive - My Drive"; } else { alert('Check pop-up blocker.'); } }); } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+    
+    const code2 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } #fs-preview-btn { bottom: 60px; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">MC</span><span id="intro-text-2" class="intro-message">enjoy</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" allow="fullscreen; pointer-lock" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (MC 1.8.8 with server joining) contact zzzjz510@gmail.com for game suggestions/fixes.</p><button id="fs-preview-btn" class="fullscreen-button" type="button" onclick="toggleBrowserFullscreen(); this.blur();">TOGGLE FULLSCREEN</button><button id="fs-btn" class="fullscreen-button" type="button" onclick="openFullscreen(); this.blur();">OPEN UNDETECTABLE</button></div><script>const ENCODED_URL = 'aHR0cHM6Ly9lYWdsZWNyYWZ0LnBhZ2VzLmRldi8='; const DB_NAME = 'GameCacheDB'; const STORE_NAME = 'GameFiles'; const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000; function getFileUrl() { try { return atob(ENCODED_URL); } catch (e) { return ''; } } function openDB() { return new Promise((resolve, reject) => { const request = indexedDB.open(DB_NAME, 1); request.onupgradeneeded = (event) => { const db = event.target.result; db.createObjectStore(STORE_NAME, { keyPath: 'url' }); }; request.onsuccess = (event) => resolve(event.target.result); request.onerror = (event) => reject(event.target.error); }); } async function saveToCache(url, content) { const db = await openDB(); const transaction = db.transaction(STORE_NAME, 'readwrite'); transaction.objectStore(STORE_NAME).put({ url: url, content: content, timestamp: Date.now() }); } async function getFileFromCache(url) { const db = await openDB(); return new Promise((resolve, reject) => { const transaction = db.transaction(STORE_NAME, 'readonly'); const request = transaction.objectStore(STORE_NAME).get(url); request.onsuccess = async (event) => { const data = event.target.result; if (data && (Date.now() - data.timestamp) < CACHE_DURATION) { resolve(data.content); } else { try { const response = await fetch(url); const text = await response.text(); await saveToCache(url, text); resolve(text); } catch (err) { reject(err); } } }; }); } function getGameLockTarget() { const iframe = document.getElementById("fr"); if (!iframe || iframe.style.display === "none") { return null; } try { const doc = iframe.contentDocument; if (!doc) { return null; } return doc.querySelector("canvas, #canvas, #game, [tabindex]") || doc.body || doc.documentElement; } catch (e) { return null; } } function refocusGame() { const iframe = document.getElementById("fr"); if (iframe && iframe.style.display !== "none") { try { iframe.contentWindow.focus(); } catch (e) {} iframe.focus(); } } function requestGamePointerLock() { const target = getGameLockTarget(); if (!target) { return; } try { if (typeof target.focus === "function") { target.focus({ preventScroll: true }); } } catch (e) {} const requestLock = target.requestPointerLock || target.mozRequestPointerLock || target.webkitRequestPointerLock; if (requestLock) { try { requestLock.call(target); } catch (e) {} } } function keepGameLocked() { [0, 120, 300, 600].forEach((delay) => { setTimeout(() => { refocusGame(); requestGamePointerLock(); }, delay); }); } function attachGameLockHandlers() { const iframe = document.getElementById("fr"); if (!iframe || iframe.style.display === "none") { return; } try { const doc = iframe.contentDocument; if (!doc || !doc.documentElement || doc.documentElement.dataset.lockHandlersAttached === "true") { return; } doc.documentElement.dataset.lockHandlersAttached = "true"; const relock = () => { if (document.fullscreenElement) { keepGameLocked(); } }; ["click", "mousedown", "keydown"].forEach((eventName) => doc.addEventListener(eventName, relock, true)); } catch (e) {} } function toggleBrowserFullscreen() { const fullscreenPromise = !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); keepGameLocked(); Promise.resolve(fullscreenPromise).then(() => { keepGameLocked(); }).catch(() => { keepGameLocked(); }); } document.addEventListener("fullscreenchange", () => { if (document.fullscreenElement) { keepGameLocked(); } }); function PlayTo(button) { const fileUrl = getFileUrl(); const iframe = document.getElementById("fr"); const fsBtn = document.getElementById("fs-btn"); const previewBtn = document.getElementById("fs-preview-btn"); getFileFromCache(fileUrl).then((text) => { iframe.contentDocument.open(); iframe.contentDocument.write(text); iframe.contentDocument.close(); iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; if(previewBtn) previewBtn.style.display = "none"; setTimeout(() => { attachGameLockHandlers(); keepGameLocked(); }, 500); fsBtn.innerHTML = "TOGGLE FULLSCREEN"; fsBtn.onclick = function() { toggleBrowserFullscreen(); this.blur(); }; }).catch((err) => { alert('Could not load game content.'); }); } function openFullscreen() { const fileUrl = getFileUrl(); getFileFromCache(fileUrl).then((text) => { const newWindow = window.open("", "_blank"); if (newWindow) { newWindow.document.open(); newWindow.document.write(text); newWindow.document.close(); newWindow.document.title = "Google Drive - My Drive"; } else { alert('Check pop-up blocker.'); } }); } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+
+    const code3 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">PolyTrack</span><span id="intro-text-2" class="intro-message">enjoy</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (PolyTrack) contact zzzjz510@gmail.com for game suggestions/fixes.</p></div><script>function PlayTo(button) { const iframe = document.getElementById("fr"); const gameHTML = \\\`<!doctype html><html><head><base href="https://cdn.jsdelivr.net/gh/genizy/polytrack@feb7f045e85fdf07e0d7f7e6d0f08984b9fe20d6/"><script>window.jkdfgnjkndfg = document.querySelector('base').href; fetch("simulation_worker.bundle.js").then(res => res.text()).then(text => { const blob = new Blob([text.replaceAll("replacethisplease", window.jkdfgnjkndfg)], { type: 'application/javascript' }); window.simulationworker = URL.createObjectURL(blob); }); const ogworker = window.Worker; window.Worker = function (scriptUrl, options) { if (typeof scriptUrl === 'string' && scriptUrl.toLowerCase() === "simulation_worker.bundle.js") { const actualWorker = new ogworker(window.simulationworker, options); return actualWorker; } return new ogworker(scriptUrl, options); }; window.Worker.prototype = ogworker.prototype; const ogfetch = window.fetch; window.fetch = async function (input, init) { if (typeof input === "string") { input = input.replace("vps.kodub.com", "vpskodub.tmena1565.workers.dev"); } return ogfetch(input, init); }; <\\\\/script><meta charset="utf-8"><script defer="defer" src="error_screen.bundle.js"><\\\\/script><script defer="defer" src="main.bundle.js"><\\\\/script></head><body><canvas id="screen"><\\\\/canvas><div id="ui"><\\\\/div><div id="transition-layer"><\\\\/div></body></html>\\\`; iframe.contentDocument.open(); iframe.contentDocument.write(gameHTML); iframe.contentDocument.close(); iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+
+    const code5 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } #fs-preview-btn { bottom: 60px; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">FNAF4</span><span id="intro-text-2" class="intro-message">enjoy</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (FNAF 4) contact zzzjz510@gmail.com for game suggestions/fixes.</p><button id="fs-preview-btn" class="fullscreen-button" type="button" onclick="toggleBrowserFullscreen(); this.blur();">TOGGLE FULLSCREEN</button><button id="fs-btn" class="fullscreen-button" type="button" onclick="openFullscreen(); this.blur();">OPEN UNDETECTABLE</button></div><script>const ENCODED_URL = 'aHR0cHM6Ly9nZW5penkuZ2l0aHViLmlvL2ZuYWYvNC8='; const DB_NAME = 'GameCacheDB'; const STORE_NAME = 'GameFiles'; const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000; function getFileUrl() { try { return atob(ENCODED_URL); } catch (e) { return ''; } } function openDB() { return new Promise((resolve, reject) => { const request = indexedDB.open(DB_NAME, 1); request.onupgradeneeded = (event) => { const db = event.target.result; db.createObjectStore(STORE_NAME, { keyPath: 'url' }); }; request.onsuccess = (event) => resolve(event.target.result); request.onerror = (event) => reject(event.target.error); }); } async function saveToCache(url, content) { const db = await openDB(); const transaction = db.transaction(STORE_NAME, 'readwrite'); transaction.objectStore(STORE_NAME).put({ url: url, content: content, timestamp: Date.now() }); } async function getFileFromCache(url) { const db = await openDB(); return new Promise((resolve, reject) => { const transaction = db.transaction(STORE_NAME, 'readonly'); const request = transaction.objectStore(STORE_NAME).get(url); request.onsuccess = async (event) => { const data = event.target.result; if (data && (Date.now() - data.timestamp) < CACHE_DURATION) { resolve(data.content); } else { try { const response = await fetch(url); const text = await response.text(); await saveToCache(url, text); resolve(text); } catch (err) { reject(err); } } }; }); } function refocusGame() { const iframe = document.getElementById("fr"); if (iframe && iframe.style.display !== "none") { iframe.focus(); } } function toggleBrowserFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().then(() => { setTimeout(refocusGame, 100); }); } else { document.exitFullscreen().then(() => { setTimeout(refocusGame, 100); }); } } function PlayTo(button) { const fileUrl = getFileUrl(); const iframe = document.getElementById("fr"); const fsBtn = document.getElementById("fs-btn"); const previewBtn = document.getElementById("fs-preview-btn"); getFileFromCache(fileUrl).then((text) => { iframe.contentDocument.open(); iframe.contentDocument.write(text); iframe.contentDocument.close(); iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; if(previewBtn) previewBtn.style.display = "none"; setTimeout(refocusGame, 500); fsBtn.innerHTML = "TOGGLE FULLSCREEN"; fsBtn.onclick = function() { toggleBrowserFullscreen(); this.blur(); }; }).catch((err) => { alert('Could not load game content.'); }); } function openFullscreen() { const fileUrl = getFileUrl(); getFileFromCache(fileUrl).then((text) => { const newWindow = window.open("", "_blank"); if (newWindow) { newWindow.document.open(); newWindow.document.write(text); newWindow.document.close(); newWindow.document.title = "Google Drive - My Drive"; } else { alert('Check pop-up blocker.'); } }); } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+
+    const code4 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">Basketball</span><span id="intro-text-2" class="intro-message">Stars</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (Basketball Stars) contact zzzjz510@gmail.com for game suggestions/fixes.</p><button id="fs-btn" class="fullscreen-button" type="button" onclick="toggleBrowserFullscreen(); this.blur();">TOGGLE FULLSCREEN</button></div><script>const ENCODED_HTML = 'PCFET0NUWVBFIGh0bWw+DQoNCg0KPCEtLSBVbHRpbWF0ZSBHYW1lIFN0YXNoIGZpbGUtLT4gDQo8IS0tIEZvciB0aGUgcmVndWxhcmx5IHVwZGF0aW5nIGRvYyBnbyB0byBodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9kb2N1bWVudC9kLzFfRm1IM0JsU0JRSTdGR2dBUUw1OS1aUGU4ZUN4czM1d2VsNkpVeVZhRzhRLyAtLT4NCg0KDQoNCg0KPGh0bWwgbGFuZz0iZW4iPg0KDQo8aGVhZD4NCiAgICA8bWV0YSBjaGFyc2V0PSJ1dGYtOCIgLz4NCiAgICA8bWV0YSBodHRwLWVxdWl2PSJ4LXVhLWNvbXBhdGlibGUiIGNvbnRlbnQ9ImllPWVkZ2UiPg0KICAgIDxtZXRhIG5hbWU9InZpZXdwb3J0IiBjb250ZW50PSJpbml0aWFsLXNjYWxlPTEsIG1heGltdW0tc2NhbGU9MSwgdXNlci1zY2FsYWJsZT1ubywgc2hyaW5rLXRvLWZpdD1ubyIgLz4NCiAgICA8bGluayByZWw9InN0eWxlc2hlZXQiIGhyZWY9Imh0dHBzOi8vMzYwNDMxODktNDgwOTU5ODY2NTIyMDkzMjE3LnByZXZpZXcuZWRpdG15c2l0ZS5jb20vdXBsb2Fkcy9iLzEzOTg5MDEyOS03NDM4MDE4ODkyMjAwNzI4NjUvZmlsZXMvYXNzZXRzL2Nzcy9hcHAuY3NzIiB0eXBlPSJ0ZXh0L2NzcyIgLz4NCiAgICA8dGl0bGU+QmFza2V0YmFsbCBTdGFyczwvdGl0bGU+DQoNCiAgICA8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11dGYtOCI+DQo8L2hlYWQ+DQoNCjxib2R5Pg0KICAgIDxkaXYgaWQ9ImNvbnRlbnQiPjwvZGl2Pg0KICAgIDxkaXYgaWQ9Im9yaWVudGF0aW9uIj48L2Rpdj4NCiAgICA8ZGl2IGlkPSJsb2FkZXIiPkxvYWRpbmcgLi4uPC9kaXY+DQogICAgPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cHM6Ly9pbWFzZGsuZ29vZ2xlYXBpcy5jb20vanMvc2RrbG9hZGVyL2ltYTMuanMiPjwvc2NyaXB0Pg0KDQogICAgPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cHM6Ly8zNjA0MzE4OS00ODA5NTk4NjY1MjIwOTMyMTcucHJldmlldy5lZGl0bXlzaXRlLmNvbS91cGxvYWRzL2IvMTM5ODkwMTI5LTc0MzgwMTg4OTIyMDA3Mjg2NS9maWxlcy9hc3NldHMvbGliL25hcGUubWluLmpzIj4NCiAgICAgICAgdmFyIG5hcGUgPSJuYXBlLm1pbi5qcyI7DQogICAgPC9zY3JpcHQ+DQoNCiAgICA8c2NyaXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCIgc3JjPSJodHRwczovLzM2MDQzMTg5LTQ4MDk1OTg2NjUyMjA5MzIxNy5wcmV2aWV3LmVkaXRteXNpdGUuY29tL3VwbG9hZHMvYi8xMzk4OTAxMjktNzQzODAxODg5MjIwMDcyODY1L2ZpbGVzL2Fzc2V0cy9saWIvanF1ZXJ5LTMuMS4xLm1pbi5qcyI+PC9zY3JpcHQ+DQogICAgPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cHM6Ly8zNjA0MzE4OS00ODA5NTk4NjY1MjIwOTMyMTcucHJldmlldy5lZGl0bXlzaXRlLmNvbS91cGxvYWRzL2IvMTM5ODkwMTI5LTc0MzgwMTg4OTIyMDA3Mjg2NS9maWxlcy9hc3NldHMvbGliL2Vhc2VsanMtMC44LjIuY29tYmluZWQuanMiPjwvc2NyaXB0Pg0KICAgIDxzY3JpcHQgdHlwZT0idGV4dC9qYXZhc2NyaXB0IiBzcmM9Imh0dHBzOi8vMzYwNDMxODktNDgwOTU5ODY2NTIyMDkzMjE3LnByZXZpZXcuZWRpdG15c2l0ZS5jb20vdXBsb2Fkcy9iLzEzOTg5MDEyOS03NDM4MDE4ODkyMjAwNzI4NjUvZmlsZXMvYXNzZXRzL2xpYi9ibHVlYmlyZC5taW4uanMiPjwvc2NyaXB0Pg0KICAgIDxzY3JpcHQgdHlwZT0idGV4dC9qYXZhc2NyaXB0IiBzcmM9Imh0dHBzOi8vMzYwNDMxODktNDgwOTU5ODY2NTIyMDkzMjE3LnByZXZpZXcuZWRpdG15c2l0ZS5jb20vdXBsb2Fkcy9iLzEzOTg5MDEyOS03NDM4MDE4ODkyMjAwNzI4NjUvZmlsZXMvYXNzZXRzL2xpYi9waGFzZXIubWluLmpzIj48L3NjcmlwdD4NCiAgICA8c2NyaXB0IHR5cGU9InRleHQvamF2YXNjcmlwdCIgc3JjPSJodHRwczovLzM2MDQzMTg5LTQ4MDk1OTg2NjUyMjA5MzIxNy5wcmV2aWV3LmVkaXRteXNpdGUuY29tL3VwbG9hZHMvYi8xMzk4OTAxMjktNzQzODAxODg5MjIwMDcyODY1L2ZpbGVzL2Fzc2V0cy9saWIvcGhhc2VyLWNhY2hlYnVzdGVyLm1pbi5qcyI+PC9zY3JpcHQ+DQogICAgPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cHM6Ly8zNjA0MzE4OS00ODA5NTk4NjY1MjIwOTMyMTcucHJldmlldy5lZGl0bXlzaXRlLmNvbS91cGxvYWRzL2IvMTM5ODkwMTI5LTc0MzgwMTg4OTIyMDA3Mjg2NS9maWxlcy9hc3NldHMvbGliL3BoYXNlci1zdXBlci1zdG9yYWdlLm1pbi5qcyI+PC9zY3JpcHQ+DQogICAgPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cHM6Ly8zNjA0MzE4OS00ODA5NTk4NjY1MjIwOTMyMTcucHJldmlldy5lZGl0bXlzaXRlLmNvbS91cGxvYWRzL2IvMTM5ODkwMTI5LTc0MzgwMTg4OTIyMDA3Mjg2NS9maWxlcy9hc3NldHMvbGliL2RyYWdvbkJvbmVzLm1pbi5qcyI+PC9zY3JpcHQ+DQoNCg0KICAgIDxzY3JpcHQgdHlwZT0idGV4dC9qYXZhc2NyaXB0Ij4NCiAgICAgICAgdmFyIG5vdElFMTEgPSAodHlwZW9mIChFdmVudCkgPT09J2Z1bmN0aW9uJyk7DQoNCiAgICAgICAgd2luZG93LlNES19PUFRJT05TID0gew0KICAgICAgICAgICAgZ2FtZUlkOiAieWNjOXl5eWZ5YXpvaWliY2UwNjFqMWI3ang5MXR0OGEiLA0KICAgICAgICAgICAgb25FdmVudDogZnVuY3Rpb24gKGV2ZW50KSB7DQogICAgICAgICAgICAgICAgc3dpdGNoIChldmVudC5uYW1lKSB7DQogICAgICAgICAgICAgICAgICAgIGNhc2UgIlNES19HQU1FX1NUQVJUIjoNCiAgICAgICAgICAgICAgICAgICAgICAgIC8vIGFkdmVydGlzZW1lbnQgZG9uZSwgcmVzdW1lIGdhbWUgbG9naWMgYW5kIHVubXV0ZSBhdWRpbw0KICAgICAgICAgICAgICAgICAgICAgICAgdmFyIGV2ZW50Ow0KICAgICAgICAgICAgICAgICAgICAgICAgaWYgKG5vdElFMTEpIHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBldmVudCA9IG5ldyBFdmVudCgiU0RLX0dBTUVfU1RBUlQiKTsNCiAgICAgICAgICAgICAgICAgICAgICAgIH0gZWxzZSB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgZXZlbnQgPSBkb2N1bWVudC5jcmVhdGVFdmVudCgnRXZlbnQnKTsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBldmVudC5pbml0RXZlbnQoJ1NES19HQU1FX1NUQVJUJywgdHJ1ZSwgdHJ1ZSk7DQogICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiY29udGVudCIpLmRpc3BhdGNoRXZlbnQoZXZlbnQpOw0KICAgICAgICAgICAgICAgICAgICAgICAgYnJlYWs7DQogICAgICAgICAgICAgICAgICAgIGNhc2UgIlNES19HQU1FX1BBVVNFIjoNCiAgICAgICAgICAgICAgICAgICAgICAgIC8vIHBhdXNlIGdhbWUgbG9naWMgLyBtdXRlIGF1ZGlvDQogICAgICAgICAgICAgICAgICAgICAgICB2YXIgZXZlbnQ7DQogICAgICAgICAgICAgICAgICAgICAgICBpZiAobm90SUUxMSkgew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIGV2ZW50ID0gbmV3IEV2ZW50KCJTREtfR0FNRV9QQVVTRSIpOw0KICAgICAgICAgICAgICAgICAgICAgICAgfSBlbHNlIHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBldmVudCA9IGRvY3VtZW50LmNyZWF0ZUV2ZW50KCdFdmVudCcpOw0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIGV2ZW50LmluaXRFdmVudCgnU0RLX0dBTUVfUEFVU0UnLCB0cnVlLCB0cnVlKTsNCiAgICAgICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICAgICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJjb250ZW50IikuZGlzcGF0Y2hFdmVudChldmVudCk7DQogICAgICAgICAgICAgICAgICAgICAgICBicmVhazsNCiAgICAgICAgICAgICAgICAgICAgY2FzZSAiU0RLX1JFQURZIjoNCiAgICAgICAgICAgICAgICAgICAgICAgIC8vIHRoaXMgZXZlbnQgaXMgdHJpZ2dlcmVkIHdoZW4geW91ciB1c2VyIGRvZXNuJ3Qgd2FudCBwZXJzb25hbGlzZWQgdGFyZ2V0aW5nIG9mIGFkcyBhbmQgc3VjaA0KICAgICAgICAgICAgICAgICAgICAgICAgY29uc29sZS5sb2coIlNES19SRUFEWSIpOw0KICAgICAgICAgICAgICAgICAgICAgICAgYnJlYWs7DQogICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgfSwNCiAgICAgICAgfTsNCiAgICAgICAgKGZ1bmN0aW9uIChhLCBiLCBjKSB7DQogICAgICAgICAgICB2YXIgZCA9IGEuZ2V0RWxlbWVudHNCeVRhZ05hbWUoYilbMF07DQogICAgICAgICAgICBhLmdldEVsZW1lbnRCeUlkKGMpIHx8IChhID0gYS5jcmVhdGVFbGVtZW50KGIpLCBhLmlkID0gYywgYS5zcmMgPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc3QzOS9zZGtAbWFpbi9zZGsuanMiLCBkLnBhcmVudE5vZGUuaW5zZXJ0QmVmb3JlKGEsIGQpKQ0KICAgICAgICB9KShkb2N1bWVudCwgInNjcmlwdCIsICJnYW1lbW9uZXRpemUtc2RrIik7IA0KICAgIDwvc2NyaXB0Pg0KPHNjcmlwdCB0eXBlPSJ0ZXh0L2phdmFzY3JpcHQiIHNyYz0iaHR0cHM6Ly8zNjA0MzE4OS00ODA5NTk4NjY1MjIwOTMyMTcucHJldmlldy5lZGl0bXlzaXRlLmNvbS91cGxvYWRzL2IvMTM5ODkwMTI5LTc0MzgwMTg4OTIyMDA3Mjg2NS9maWxlcy9icy5taW4uanMiPjwvc2NyaXB0PjwvYm9keT4NCjxzY3JpcHQgc3JjPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvc3QzOS9zZGtAbWFpbi9hcGkuanMiPjwvc2NyaXB0Pg0KPC9odG1sPg0KDQoNCg=='; function decodeGameHTML() { try { return atob(ENCODED_HTML); } catch (e) { return ''; } } function refocusGame() { const iframe = document.getElementById("fr"); if (iframe && iframe.style.display !== "none") { iframe.focus(); } } function toggleBrowserFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().then(() => { setTimeout(refocusGame, 100); }); } else { document.exitFullscreen().then(() => { setTimeout(refocusGame, 100); }); } } function PlayTo(button) { const iframe = document.getElementById("fr"); const gameHTML = decodeGameHTML(); if (!gameHTML) { alert('Could not load game content.'); return; } iframe.srcdoc = gameHTML; iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; setTimeout(refocusGame, 500); } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+
+    const code6 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">Mario Kart</span><span id="intro-text-2" class="intro-message">64</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (Mario Kart 64) contact zzzjz510@gmail.com for game suggestions/fixes.</p><button id="fs-btn" class="fullscreen-button" type="button" onclick="toggleBrowserFullscreen(); this.blur();">TOGGLE FULLSCREEN</button></div><script>const ENCODED_HTML = 'PGh0bWw+DQoNCg0KPCEtLSBVbHRpbWF0ZSBHYW1lIFN0YXNoIGZpbGUtLT4gDQo8IS0tIEZvciB0aGUgcmVndWxhcmx5IHVwZGF0aW5nIGRvYyBnbyB0byBodHRwczovL2RvY3MuZ29vZ2xlLmNvbS9kb2N1bWVudC9kLzFfRm1IM0JsU0JRSTdGR2dBUUw1OS1aUGU4ZUN4czM1d2VsNkpVeVZhRzhRLyAtLT4NCg0KDQoNCjxoZWFkPg0KCTxzY3JpcHQgc3JjPSIvL3d3dy5nb29nbGUuY29tL2pzYXBpIj48L3NjcmlwdD4NCgk8c2NyaXB0Pg0KCQlpZiAod2luZG93LnBhcmVudCAmJiB0eXBlb2Ygd2luZG93LnBhcmVudC5tYWVFeHBvcnRBcGlzXyA9PT0gImZ1bmN0aW9uIikgeyB3aW5kb3cucGFyZW50Lm1hZUV4cG9ydEFwaXNfKCk7IH0NCgk8L3NjcmlwdD4NCg0KCTxzdHlsZT4NCgkJYm9keSB7DQoJCQlvdmVyZmxvdzogaGlkZGVuOw0KCQkJYmFja2dyb3VuZDogIzAwMDAwMDsNCgkJCW1hcmdpbi10b3A6IDA7DQoJCQltYXJnaW4tbGVmdDogMDsNCgkJCWNvbG9yOiAjMDAwMDAwOw0KCQl9DQoNCgkJI3N0YXJ0QnV0dG9uIHsNCgkJCWRpc3BsYXk6IGJsb2NrOw0KCQkJd2lkdGg6IDE2MHB4Ow0KCQkJaGVpZ2h0OiA0MHB4Ow0KCQkJYmFja2dyb3VuZC1jb2xvcjogIzRDQUY1MDsNCgkJCWNvbG9yOiB3aGl0ZTsNCgkJCXRleHQtYWxpZ246IGNlbnRlcjsNCgkJCXRleHQtZGVjb3JhdGlvbjogbm9uZTsNCgkJCWZvbnQtc2l6ZTogMTZweDsNCgkJCW1hcmdpbjogMjBweCBhdXRvOw0KCQkJcGFkZGluZzogMTBweCAyMHB4Ow0KCQkJYm9yZGVyOiBub25lOw0KCQkJYm9yZGVyLXJhZGl1czogOHB4Ow0KCQkJY3Vyc29yOiBwb2ludGVyOw0KCQkJZm9udC1mYW1pbHk6ICdQcmVzcyBTdGFydCAyUCcsIGN1cnNpdmU7DQoJCQlib3gtc2hhZG93OiAwcHggMHB4IDEwcHggMnB4ICMwMDAwMDA7DQoJCX0NCgk8L3N0eWxlPg0KCTxsaW5rIGhyZWY9Imh0dHBzOi8vZm9udHMuZ29vZ2xlYXBpcy5jb20vY3NzMj9mYW1pbHk9UHJlc3MrU3RhcnQrMlAmYW1wO2Rpc3BsYXk9c3dhcCIgcmVsPSJzdHlsZXNoZWV0Ij4NCgk8c3R5bGUgdHlwZT0idGV4dC9jc3MiPg0KCQkjYnV0dG9uIHsNCgkJCWRpc3BsYXk6IG5vbmU7DQoJCX0NCg0KCQkuaW1nYl92aXMgew0KCQkJYW5pbWF0aW9uOiBpbWdiLWFuaW1hdGlvbiA3cyBsaW5lYXI7DQoJCX0NCg0KCQlAa2V5ZnJhbWVzIGltZ2ItYW5pbWF0aW9uIHsNCgkJCTEwJSB7DQoJCQkJdHJhbnNmb3JtOiB0cmFuc2xhdGVYKDApOw0KCQkJfQ0KDQoJCQkyMCUgew0KCQkJCXRyYW5zZm9ybTogdHJhbnNsYXRlWCgxMDBweCk7DQoJCQl9DQoNCgkJCTkwJSB7DQoJCQkJdHJhbnNmb3JtOiB0cmFuc2xhdGVYKDEwMHB4KTsNCgkJCX0NCg0KCQkJMTAwJSB7DQoJCQkJdHJhbnNmb3JtOiB0cmFuc2xhdGVYKDApOw0KCQkJfQ0KCQl9DQoJPC9zdHlsZT4NCjwvaGVhZD4NCg0KPGJvZHk+DQoJPGRpdiBzdHlsZT0id2lkdGg6IDEwMHZ3OyBoZWlnaHQ6IDEwMHZoO21heC13aWR0aDoxMDAlIj4NCgkJPGRpdiBpZD0iZ2FtZSIgc3R5bGU9ImRpc3BsYXk6IG5vbmU7Ij48L2Rpdj4NCgkJPGJ1dHRvbiBpZD0ic3RhcnRCdXR0b24iPlBMQVk8L2J1dHRvbj4NCgk8L2Rpdj4NCgk8c2NyaXB0Pg0KCQlkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgiZ2FtZSIpLnN0eWxlLmRpc3BsYXkgPSAibm9uZSI7DQogICAgICAgICAgICBmdW5jdGlvbiBzdGFydEdhbWUoKSB7DQogICAgICAgICAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoImdhbWUiKS5zdHlsZS5kaXNwbGF5ID0gImJsb2NrIjsNCiAgICAgICAgICAgICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgic3RhcnRCdXR0b24iKS5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOw0KICAgICAgICAgICAgICAgIEVKU19wbGF5ZXIgPSAiI2dhbWUiOw0KICAgICAgICAgICAgICAgIEVKU19jb3JlID0gIm42NCI7DQogICAgICAgICAgICAgICAgRUpTX2NvbG9yID0gIiMwMDAwMDAiOw0KICAgICAgICAgICAgICAgIEVKU19zdGFydE9uTG9hZGVkID0gdHJ1ZTsNCiAgICAgICAgICAgICAgICBFSlNfcGF0aHRvZGF0YSA9ICJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvYTQ1NnB1ci9zZXJhcGhAODFmNTUxY2EwYWE4ZTNkNjAxOGQzMmQ4YWM1OTA0YWM5YmM3OGY3Ni9zdG9yYWdlL2VtdWxhdG9yanMvZGF0YSI7DQogICAgICAgICAgICAgICAgRUpTX2dhbWVVcmwgPSAiaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL2E0NTZwdXIvc2VyYXBoQGFlMmZjYzZkNmE5Y2QwNTE2NTRmY2MwNTE5MDgwZGIxZjc5Y2YyYTcvZ2FtZXMvbWFyaW9rYXJ0NjQvbWFyaW9rYXJ0NjQuemlwIjsNCiAgICAgICAgICAgICAgICBsb2FkR2FtZSgpOyANCiAgICAgICAgICAgIH0NCiAgICAgICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJzdGFydEJ1dHRvbiIpLmFkZEV2ZW50TGlzdGVuZXIoImNsaWNrIiwgc3RhcnRHYW1lKTsNCiAgICAgICAgICAgIGZ1bmN0aW9uIGxvYWRHYW1lKCkgew0KICAgICAgICAgICAgICAgIHZhciBzY3JpcHQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJzY3JpcHQiKTsNCiAgICAgICAgICAgICAgICBzY3JpcHQuc3JjID0gImh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9hNDU2cHVyL3NlcmFwaEA4MWY1NTFjYTBhYThlM2Q2MDE4ZDMyZDhhYzU5MDRhYzliYzc4Zjc2L3N0b3JhZ2UvZW11bGF0b3Jqcy9kYXRhL2xvYWRlci5qcyI7DQogICAgICAgICAgICAgICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChzY3JpcHQpOw0KCQl2YXIgc2NyaXB0ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgic2NyaXB0Iik7DQogICAgICAgICAgICAgICAgc2NyaXB0LnNyYyA9ICJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvYTQ1NnB1ci9zZXJhcGhAYWUyZmNjNmQ2YTljZDA1MTY1NGZjYzA1MTkwODBkYjFmNzljZjJhNy9zdG9yYWdlL2pzL2Nsb2FrLmpzIjsNCiAgICAgICAgICAgICAgICBkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKHNjcmlwdCk7DQogICAgICAgICAgICB9DQoJPC9zY3JpcHQ+DQoNCg0K'; function decodeGameHTML() { try { return atob(ENCODED_HTML); } catch (e) { return ''; } } function refocusGame() { const iframe = document.getElementById("fr"); if (iframe && iframe.style.display !== "none") { iframe.focus(); } } function toggleBrowserFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().then(() => { setTimeout(refocusGame, 100); }); } else { document.exitFullscreen().then(() => { setTimeout(refocusGame, 100); }); } } function PlayTo(button) { const iframe = document.getElementById("fr"); const gameHTML = decodeGameHTML(); if (!gameHTML) { alert('Could not load game content.'); return; } iframe.srcdoc = gameHTML; iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; setTimeout(refocusGame, 500); } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+
+    const code7 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">Slope</span><span id="intro-text-2" class="intro-message">2P</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" allow="fullscreen; pointer-lock" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (Slope 2 Player) contact zzzjz510@gmail.com for game suggestions/fixes.</p><button id="fs-btn" class="fullscreen-button" type="button" onclick="toggleBrowserFullscreen(); this.blur();">TOGGLE FULLSCREEN</button></div><script>const ENCODED_HTML = 'PCFET0NUWVBFIGh0bWw+DQo8aHRtbCBsYW5nPSJlbi11cyI+DQogIDxoZWFkPg0KICAgIDxtZXRhIGNoYXJzZXQ9InV0Zi04Ij4NCiAgICA8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD11dGYtOCI+DQogICAgPHRpdGxlPlNsb3BlIDIgUGxheWVyIG9uIHlvdXIgZ3JhbmRtYTwvdGl0bGU+PG1ldGEgbmFtZT0icm9ib3RzIiBjb250ZW50PSJub2luZGV4Ij4NCiAgICA8bGluayByZWw9InNob3J0Y3V0IGljb24iIGhyZWY9IlRlbXBsYXRlRGF0YS9mYXZpY29uLmljbyI+DQogICAgPGxpbmsgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvYnViYmxzL1VHUy1Bc3NldHNAYjcxODg3NDVlYjAzYTNiZGUzMTgzZmYzNDk0ZDA3MTNhYzVhZDZjNS9zbG9wZSUyMDIlMjBwbGF5ZXIvVGVtcGxhdGVEYXRhL3N0eWxlLmNzcyI+DQogIDxib2R5Pg0KICAgIDxkaXYgaWQ9InVuaXR5LWNvbnRhaW5lciIgY2xhc3M9InVuaXR5LWRlc2t0b3AiPg0KICAgICAgPGNhbnZhcyBpZD0idW5pdHktY2FudmFzIiB3aWR0aD0xMjgwIGhlaWdodD03MjA+PC9jYW52YXM+DQogICAgICA8ZGl2IGlkPSJ1bml0eS1sb2FkaW5nLWJhciI+DQogICAgICAgIDxkaXYgaWQ9InVuaXR5LWxvZ28iPjwvZGl2Pg0KICAgICAgICA8ZGl2IGlkPSJ1bml0eS1wcm9ncmVzcy1iYXItZW1wdHkiPg0KICAgICAgICAgIDxkaXYgaWQ9InVuaXR5LXByb2dyZXNzLWJhci1mdWxsIj48L2Rpdj4NCiAgICAgICAgPC9kaXY+DQogICAgICA8L2Rpdj4NCiAgICAgIDxkaXYgaWQ9InVuaXR5LW1vYmlsZS13YXJuaW5nIj4NCiAgICAgICAgV2ViR0wgYnVpbGRzIGFyZSBub3Qgc3VwcG9ydGVkIG9uIG1vYmlsZSBkZXZpY2VzLg0KICAgICAgPC9kaXY+DQogICAgICA8ZGl2IGlkPSJ1bml0eS1mb290ZXIiPg0KICAgICAgICA8ZGl2IGlkPSJ1bml0eS13ZWJnbC1sb2dvIj48L2Rpdj4NCiAgICAgICAgPGRpdiBpZD0idW5pdHktZnVsbHNjcmVlbi1idXR0b24iPjwvZGl2Pg0KICAgICAgICA8ZGl2IGlkPSJ1bml0eS1idWlsZC10aXRsZSI+U2xvcGUgMiBQbGF5ZXI8L2Rpdj4NCiAgICAgIDwvZGl2Pg0KICAgIDwvZGl2Pg0KICAgIDxzY3JpcHQ+DQogICAgICB2YXIgYnVpbGRVcmwgPSAiIjsNCiAgICAgIHZhciBsb2FkZXJVcmwgPSBidWlsZFVybCArICJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvYnViYmxzL1VHUy1Bc3NldHNAYjcxODg3NDVlYjAzYTNiZGUzMTgzZmYzNDk0ZDA3MTNhYzVhZDZjNS9zbG9wZSUyMDIlMjBwbGF5ZXIvQnVpbGQvV2ViR0wyUGxheWVycyUyMHYxLjEubG9hZGVyLmpzIjsNCiAgICAgIHZhciBjb25maWcgPSB7DQogICAgICAgIGRhdGFVcmw6IGJ1aWxkVXJsICsgImh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9idWJibHMvVUdTLUFzc2V0c0BiNzE4ODc0NWViMDNhM2JkZTMxODNmZjM0OTRkMDcxM2FjNWFkNmM1L3Nsb3BlJTIwMiUyMHBsYXllci9CdWlsZC9XZWJHTDJQbGF5ZXJzJTIwdjEuMS5kYXRhLnVuaXR5d2ViIiwNCiAgICAgICAgZnJhbWV3b3JrVXJsOiBidWlsZFVybCArICJodHRwczovL2Nkbi5qc2RlbGl2ci5uZXQvZ2gvYnViYmxzL1VHUy1Bc3NldHNAYjcxODg3NDVlYjAzYTNiZGUzMTgzZmYzNDk0ZDA3MTNhYzVhZDZjNS9zbG9wZSUyMDIlMjBwbGF5ZXIvQnVpbGQvV2ViR0wyUGxheWVycyUyMHYxLjEuZnJhbWV3b3JrLmpzLnVuaXR5d2ViIiwNCiAgICAgICAgY29kZVVybDogYnVpbGRVcmwgKyAiaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL2J1YmJscy9VR1MtQXNzZXRzQGI3MTg4NzQ1ZWIwM2EzYmRlMzE4M2ZmMzQ5NGQwNzEzYWM1YWQ2YzUvc2xvcGUlMjAyJTIwcGxheWVyL0J1aWxkL1dlYkdMMlBsYXllcnMlMjB2MS4xLndhc20udW5pdHl3ZWIiLA0KICAgICAgICBzdHJlYW1pbmdBc3NldHNVcmw6ICJTdHJlYW1pbmdBc3NldHMiLA0KICAgICAgICBjb21wYW55TmFtZTogIkRlZmF1bHRDb21wYW55IiwNCiAgICAgICAgcHJvZHVjdE5hbWU6ICJTbG9wZSAyIFBsYXllciIsDQogICAgICAgIHByb2R1Y3RWZXJzaW9uOiAiMSIsDQogICAgICB9Ow0KDQogICAgICB2YXIgY29udGFpbmVyID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcigiI3VuaXR5LWNvbnRhaW5lciIpOw0KICAgICAgdmFyIGNhbnZhcyA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoIiN1bml0eS1jYW52YXMiKTsNCiAgICAgIHZhciBsb2FkaW5nQmFyID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcigiI3VuaXR5LWxvYWRpbmctYmFyIik7DQogICAgICB2YXIgcHJvZ3Jlc3NCYXJGdWxsID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcigiI3VuaXR5LXByb2dyZXNzLWJhci1mdWxsIik7DQogICAgICB2YXIgZnVsbHNjcmVlbkJ1dHRvbiA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoIiN1bml0eS1mdWxsc2NyZWVuLWJ1dHRvbiIpOw0KICAgICAgdmFyIG1vYmlsZVdhcm5pbmcgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCIjdW5pdHktbW9iaWxlLXdhcm5pbmciKTsNCg0KICAgICAgLy8gQnkgZGVmYXVsdCBVbml0eSBrZWVwcyBXZWJHTCBjYW52YXMgcmVuZGVyIHRhcmdldCBzaXplIG1hdGNoZWQgd2l0aA0KICAgICAgLy8gdGhlIERPTSBzaXplIG9mIHRoZSBjYW52YXMgZWxlbWVudCAoc2NhbGVkIGJ5IHdpbmRvdy5kZXZpY2VQaXhlbFJhdGlvKQ0KICAgICAgLy8gU2V0IHRoaXMgdG8gZmFsc2UgaWYgeW91IHdhbnQgdG8gZGVjb3VwbGUgdGhpcyBzeW5jaHJvbml6YXRpb24gZnJvbQ0KICAgICAgLy8gaGFwcGVuaW5nIGluc2lkZSB0aGUgZW5naW5lLCBhbmQgeW91IHdvdWxkIGluc3RlYWQgbGlrZSB0byBzaXplIHVwDQogICAgICAvLyB0aGUgY2FudmFzIERPTSBzaXplIGFuZCBXZWJHTCByZW5kZXIgdGFyZ2V0IHNpemVzIHlvdXJzZWxmLg0KICAgICAgLy8gY29uZmlnLm1hdGNoV2ViR0xUb0NhbnZhc1NpemUgPSBmYWxzZTsNCg0KICAgICAgaWYgKC9pUGhvbmV8aVBhZHxpUG9kfEFuZHJvaWQvaS50ZXN0KG5hdmlnYXRvci51c2VyQWdlbnQpKSB7DQogICAgICAgIGNvbnRhaW5lci5jbGFzc05hbWUgPSAidW5pdHktbW9iaWxlIjsNCiAgICAgICAgLy8gQXZvaWQgZHJhaW5pbmcgZmlsbHJhdGUgcGVyZm9ybWFuY2Ugb24gbW9iaWxlIGRldmljZXMsDQogICAgICAgIC8vIGFuZCBkZWZhdWx0L292ZXJyaWRlIGxvdyBEUEkgbW9kZSBvbiBtb2JpbGUgYnJvd3NlcnMuDQogICAgICAgIGNvbmZpZy5kZXZpY2VQaXhlbFJhdGlvID0gMTsNCiAgICAgICAgbW9iaWxlV2FybmluZy5zdHlsZS5kaXNwbGF5ID0gImJsb2NrIjsNCiAgICAgICAgc2V0VGltZW91dCgoKSA9PiB7DQogICAgICAgICAgbW9iaWxlV2FybmluZy5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOw0KICAgICAgICB9LCA1MDAwKTsNCiAgICAgIH0gZWxzZSB7DQogICAgICAgIGNhbnZhcy5zdHlsZS53aWR0aCA9ICIxMDI0cHgiOw0KICAgICAgICBjYW52YXMuc3R5bGUuaGVpZ2h0ID0gIjU3NnB4IjsNCiAgICAgIH0NCiAgICAgIGxvYWRpbmdCYXIuc3R5bGUuZGlzcGxheSA9ICJibG9jayI7DQoNCiAgICAgIHZhciBzY3JpcHQgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJzY3JpcHQiKTsNCiAgICAgIHNjcmlwdC5zcmMgPSBsb2FkZXJVcmw7DQogICAgICBzY3JpcHQub25sb2FkID0gKCkgPT4gew0KICAgICAgICBjcmVhdGVVbml0eUluc3RhbmNlKGNhbnZhcywgY29uZmlnLCAocHJvZ3Jlc3MpID0+IHsNCiAgICAgICAgICBwcm9ncmVzc0JhckZ1bGwuc3R5bGUud2lkdGggPSAxMDAgKiBwcm9ncmVzcyArICIlIjsNCiAgICAgICAgfSkudGhlbigodW5pdHlJbnN0YW5jZSkgPT4gew0KICAgICAgICAgIGxvYWRpbmdCYXIuc3R5bGUuZGlzcGxheSA9ICJub25lIjsNCiAgICAgICAgICBmdWxsc2NyZWVuQnV0dG9uLm9uY2xpY2sgPSAoKSA9PiB7DQogICAgICAgICAgICB1bml0eUluc3RhbmNlLlNldEZ1bGxzY3JlZW4oMSk7DQogICAgICAgICAgfTsNCiAgICAgICAgfSkuY2F0Y2goKG1lc3NhZ2UpID0+IHsNCiAgICAgICAgICBjb25zb2xlLmxvZyhtZXNzYWdlKTsNCiAgICAgICAgfSk7DQogICAgICB9Ow0KICAgICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChzY3JpcHQpOw0KICAgIDwvc2NyaXB0Pg0KPC9ib2R5Pg0KPC9odG1sPg=='; function decodeGameHTML() { try { return atob(ENCODED_HTML); } catch (e) { return ''; } } function refocusGame() { const iframe = document.getElementById("fr"); if (iframe && iframe.style.display !== "none") { iframe.focus(); } } function toggleBrowserFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().then(() => { setTimeout(refocusGame, 100); }); } else { document.exitFullscreen().then(() => { setTimeout(refocusGame, 100); }); } } function PlayTo(button) { const iframe = document.getElementById("fr"); const gameHTML = decodeGameHTML(); if (!gameHTML) { alert('Could not load game content.'); return; } iframe.srcdoc = gameHTML; iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; setTimeout(refocusGame, 500); } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+
+    const code8 = \`<!DOCTYPE html><html><head><base target="_blank"><title>Game Loader</title><style>#intro-text-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); display: flex; justify-content: center; align-items: center; z-index: 9999; } .intro-message { color: gold; font-size: 5vw; font-family: 'Arial', sans-serif; font-weight: bold; text-shadow: 2px 2px 4px #000000; position: absolute; opacity: 0; } #intro-text-1 { animation: fade-and-hold-1 2s forwards; } #intro-text-2 { animation: fade-and-hold-2 2s forwards; } @keyframes fade-and-hold-1 { 0%, 5% { opacity: 0; } 25% { opacity: 1; } 45% { opacity: 1; } 50%, 100% { opacity: 0; } } @keyframes fade-and-hold-2 { 0%, 50% { opacity: 0; } 55% { opacity: 1; } 75% { opacity: 1; } 95%, 100% { opacity: 0; } } .play-button { padding: 20px 40px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 10px; font: bold 24px Arial; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; } .play-button:hover { background: #4a148c; } .fullscreen-button { padding: 6.6px 10px; background: #000; color: #fff; border: 2px solid #4a148c; border-radius: 5px; font: bold 9px Arial; cursor: pointer; position: fixed; bottom: 20px; right: 20px; z-index: 1002; opacity: 0.4; transition: opacity 0.2s; outline: none; } .fullscreen-button:hover { background: #4a148c; opacity: 1; } body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; background: #000; } #container { width: 100%; height: 100%; }</style></head><body><div id="intro-text-overlay"><span id="intro-text-1" class="intro-message">FNAE</span><span id="intro-text-2" class="intro-message">enjoy</span></div><div id="container"><iframe id="fr" width="100%" height="100%" frameborder="0" allowfullscreen="" allow="fullscreen; pointer-lock" style="display:none;"></iframe><button class="play-button" type="button" onclick="PlayTo(this)">PLAY REGULAR</button><p id="unblocked-text" style="color:white; position:absolute; top:60%; left:50%; transform:translateX(-50%);">G+ (FNAE) contact zzzjz510@gmail.com for game suggestions/fixes.</p><button id="fs-btn" class="fullscreen-button" type="button" onclick="toggleBrowserFullscreen(); this.blur();">TOGGLE FULLSCREEN</button></div><script>const ENCODED_HTML = 'PCFET0NUWVBFIGh0bWw+DQo8aHRtbCBsYW5nPSJlbi11cyI+DQogIDxoZWFkPg0KICAgIDxiYXNlIGhyZWY9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC93ZWItcG9ydHMvZm5hZUBhZmQ0ZTUwNzFhZGQyOTdkNjE2OTY2NWE0Zjk5OWQ2MmYzMTI1MzJlLyI+DQogICAgPG1ldGEgY2hhcnNldD0idXRmLTgiPg0KICAgIDxtZXRhIGh0dHAtZXF1aXY9IkNvbnRlbnQtVHlwZSIgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0Zi04Ij4NCiAgICA8dGl0bGU+VW5pdHkgV2ViIFBsYXllciB8bm9uZTwvdGl0bGU+DQogICAgPGxpbmsgcmVsPSJzaG9ydGN1dCBpY29uIiBocmVmPSJUZW1wbGF0ZURhdGEvZmF2aWNvbi5pY28iPg0KICAgIDxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iVGVtcGxhdGVEYXRhL3N0eWxlLmNzcyI+DQogIDwvaGVhZD4NCiAgPGJvZHk+DQogIDxkaXYgaWQ9ImxvYWRpbmctdGV4dCINCiAgICBzdHlsZT0iY29sb3I6IHdoaXRlOyBmb250LXNpemU6IDQ4cHg7IGZvbnQtZmFtaWx5OiBjdXJzaXZlOyB0ZXh0LWFsaWduOiBjZW50ZXI7IG1hcmdpbi10b3A6IDIwcHg7Ij4gTE9BRElORy4uLg0KICA8L2Rpdj4NCiAgICA8ZGl2IGlkPSJ1bml0eS1jb250YWluZXIiPg0KICAgICAgPGNhbnZhcyBpZD0idW5pdHktY2FudmFzIiB3aWR0aD05NjAgaGVpZ2h0PTYwMCB0YWJpbmRleD0iLTEiPjwvY2FudmFzPg0KICAgICAgPGRpdiBpZD0idW5pdHktbG9hZGluZy1iYXIiPg0KICAgICAgICA8ZGl2IGlkPSJ1bml0eS1sb2dvIj48L2Rpdj4NCiAgICAgICAgPGRpdiBpZD0idW5pdHktcHJvZ3Jlc3MtYmFyLWVtcHR5Ij4NCiAgICAgICAgICA8ZGl2IGlkPSJ1bml0eS1wcm9ncmVzcy1iYXItZnVsbCI+PC9kaXY+DQogICAgICAgIDwvZGl2Pg0KICAgICAgPC9kaXY+DQogICAgPC9kaXY+DQogICAgPHNjcmlwdD4NCnZhciBsb2FkaW5nVGV4dCA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoIiNsb2FkaW5nLXRleHQiKTsNCiAgICBsZXQgdG90YWxCeXRlcyA9IDA7DQogICAgbGV0IGxvYWRlZEJ5dGVzID0gMDsNCg0KICAgIGFzeW5jIGZ1bmN0aW9uIGZldGNoV2l0aFByb2dyZXNzKHVybCkgew0KICAgICAgY29uc3QgcmVzcG9uc2UgPSBhd2FpdCBmZXRjaCh1cmwpOw0KICAgICAgY29uc3QgcmVhZGVyID0gcmVzcG9uc2UuYm9keS5nZXRSZWFkZXIoKTsNCiAgICAgIGxldCBjaHVua3MgPSBbXTsNCiAgICAgIGxldCByZWNlaXZlZCA9IDA7DQogICAgICB3aGlsZSAodHJ1ZSkgew0KICAgICAgICBjb25zdCB7DQogICAgICAgICAgZG9uZSwNCiAgICAgICAgICB2YWx1ZQ0KICAgICAgICB9ID0gYXdhaXQgcmVhZGVyLnJlYWQoKTsNCiAgICAgICAgaWYgKGRvbmUpIGJyZWFrOw0KICAgICAgICByZWNlaXZlZCArPSB2YWx1ZS5sZW5ndGg7DQogICAgICAgIGxvYWRlZEJ5dGVzICs9IHZhbHVlLmxlbmd0aDsNCiAgICAgICAgY2h1bmtzLnB1c2godmFsdWUpOw0KICAgICAgICBsZXQgbWJEb25lID0gKGxvYWRlZEJ5dGVzIC8gKDEwMjQgKiAxMDI0KSkudG9GaXhlZCgyKTsNCiAgICAgICAgbGV0IG1iVG90YWwgPSAnMTM5LjUzJzsNCiAgICAgICAgbG9hZGluZ1RleHQudGV4dENvbnRlbnQgPSBgTE9BRElORy4uLiAke21iRG9uZX0gTUIgLyAke21iVG90YWx9IE1CYDsNCiAgICAgIH0NCiAgICAgIGxldCBmdWxsQnVmZmVyID0gbmV3IFVpbnQ4QXJyYXkocmVjZWl2ZWQpOw0KICAgICAgbGV0IG9mZnNldCA9IDA7DQogICAgICBmb3IgKGxldCBjaHVuayBvZiBjaHVua3MpIHsNCiAgICAgICAgZnVsbEJ1ZmZlci5zZXQoY2h1bmssIG9mZnNldCk7DQogICAgICAgIG9mZnNldCArPSBjaHVuay5sZW5ndGg7DQogICAgICB9DQogICAgICByZXR1cm4gZnVsbEJ1ZmZlci5idWZmZXI7DQogICAgfQ0KDQogICAgYXN5bmMgZnVuY3Rpb24gbWVyZ2VGaWxlcyhmaWxlUGFydHMsIGNhY2hlS2V5KSB7DQogICAgICBjb25zdCBidWZmZXJzID0gYXdhaXQgUHJvbWlzZS5hbGwoDQogICAgICAgIGZpbGVQYXJ0cy5tYXAocGFydCA9PiBmZXRjaFdpdGhQcm9ncmVzcyhwYXJ0KSkNCiAgICAgICk7DQogICAgICBjb25zdCBtZXJnZWRCbG9iID0gbmV3IEJsb2IoYnVmZmVycyk7DQogICAgICByZXR1cm4gVVJMLmNyZWF0ZU9iamVjdFVSTChtZXJnZWRCbG9iKTsNCiAgICB9DQoNCiAgICBmdW5jdGlvbiBnZXRQYXJ0cyhmaWxlLCBzdGFydCwgZW5kKSB7DQogICAgICBsZXQgcGFydHMgPSBbXTsNCiAgICAgIGZvciAobGV0IGkgPSBzdGFydDsgaSA8PSBlbmQ7IGkrKykgew0KICAgICAgICBwYXJ0cy5wdXNoKGZpbGUgKyAiLnBhcnQiICsgaSk7DQogICAgICB9DQogICAgICByZXR1cm4gcGFydHM7DQogICAgfQ0KICAgIChhc3luYyAoKSA9PiB7DQogICAgICBjb25zdCBbZGF0YVVybCwgd2FzbVVybCwgd2VibV0gPSBhd2FpdCBQcm9taXNlLmFsbChbDQogICAgICAgIG1lcmdlRmlsZXMoZ2V0UGFydHMoIkJ1aWxkL2ZuYWUuZGF0YSIsIDEsIDMpLCAiZm5hZS5kYXRhIiksDQogICAgICAgIG1lcmdlRmlsZXMoZ2V0UGFydHMoIkJ1aWxkL2ZuYWUud2FzbSIsIDEsIDIpLCAiZm5hZS53YXNtIiksDQogICAgICAgIG1lcmdlRmlsZXMoZ2V0UGFydHMoIlN0cmVhbWluZ0Fzc2V0cy8yMDI1MTIxOTE5MzUud2VibSIsIDEsIDMpLCAiMjAyNTEyMTkxOTM1LndlYm0iKSwNCiAgICAgIF0pOw0KDQp3aW5kb3cucmFuZG9td2VibSA9IHdlYm07DQpjb25zdCByZWFsU3JjID0gT2JqZWN0LmdldE93blByb3BlcnR5RGVzY3JpcHRvcigNCiAgSFRNTE1lZGlhRWxlbWVudC5wcm90b3R5cGUsDQogICJzcmMiDQopOw0KDQpPYmplY3QuZGVmaW5lUHJvcGVydHkoSFRNTE1lZGlhRWxlbWVudC5wcm90b3R5cGUsICJzcmMiLCB7DQogIHNldCh2YWx1ZSkgew0KICAgIGlmICh0eXBlb2YgdmFsdWUgPT09ICJzdHJpbmciICYmIHZhbHVlLmluY2x1ZGVzKCIyMDI1MTIxOTE5MzUubXA0IikpIHsNCiAgICAgIHZhbHVlID0gd2luZG93LnJhbmRvbXdlYm07DQogICAgfQ0KICAgIHJldHVybiByZWFsU3JjLnNldC5jYWxsKHRoaXMsIHZhbHVlKTsNCiAgfSwNCiAgZ2V0KCkgew0KICAgIHJldHVybiByZWFsU3JjLmdldC5jYWxsKHRoaXMpOw0KICB9DQp9KTsNCg0KDQogICAgICB2YXIgY29udGFpbmVyID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcigiI3VuaXR5LWNvbnRhaW5lciIpOw0KICAgICAgdmFyIGNhbnZhcyA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoIiN1bml0eS1jYW52YXMiKTsNCiAgICAgIHZhciBsb2FkaW5nQmFyID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcigiI3VuaXR5LWxvYWRpbmctYmFyIik7DQogICAgICB2YXIgcHJvZ3Jlc3NCYXJGdWxsID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcigiI3VuaXR5LXByb2dyZXNzLWJhci1mdWxsIik7DQogICAgICB2YXIgd2FybmluZ0Jhbm5lciA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoIiN1bml0eS13YXJuaW5nIik7DQoNCiAgICAgIGZ1bmN0aW9uIHVuaXR5U2hvd0Jhbm5lcihtc2csIHR5cGUpIHsNCg0KICAgICAgfQ0KDQogICAgICB2YXIgYnVpbGRVcmwgPSAiQnVpbGQiOw0KICAgICAgdmFyIGxvYWRlclVybCA9IGJ1aWxkVXJsICsgIi9mbmFlLmxvYWRlci5qcyI7DQogICAgICB2YXIgY29uZmlnID0gew0KICAgICAgICBhcmd1bWVudHM6IFtdLA0KICAgICAgICBkYXRhVXJsOiBkYXRhVXJsLA0KICAgICAgICBmcmFtZXdvcmtVcmw6IGJ1aWxkVXJsICsgIi9mbmFlLmZyYW1ld29yay5qcyIsDQogICAgICAgIGNvZGVVcmw6IHdhc21VcmwsDQogICAgICAgIHN0cmVhbWluZ0Fzc2V0c1VybDogIlN0cmVhbWluZ0Fzc2V0cyIsDQogICAgICAgIGNvbXBhbnlOYW1lOiAiRGVmYXVsdENvbXBhbnkiLA0KICAgICAgICBwcm9kdWN0TmFtZTogImZuYWUiLA0KICAgICAgICBwcm9kdWN0VmVyc2lvbjogIjEuMCIsDQogICAgICAgIHNob3dCYW5uZXI6IHVuaXR5U2hvd0Jhbm5lciwNCiAgICAgIH07DQoNCiAgICAgIGlmICgvaVBob25lfGlQYWR8aVBvZHxBbmRyb2lkL2kudGVzdChuYXZpZ2F0b3IudXNlckFnZW50KSkgew0KICAgICAgICB2YXIgbWV0YSA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ21ldGEnKTsNCiAgICAgICAgbWV0YS5uYW1lID0gJ3ZpZXdwb3J0JzsNCiAgICAgICAgbWV0YS5jb250ZW50ID0gJ3dpZHRoPWRldmljZS13aWR0aCwgaGVpZ2h0PWRldmljZS1oZWlnaHQsIGluaXRpYWwtc2NhbGU9MS4wLCB1c2VyLXNjYWxhYmxlPW5vLCBzaHJpbmstdG8tZml0PXllcyc7DQogICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRzQnlUYWdOYW1lKCdoZWFkJylbMF0uYXBwZW5kQ2hpbGQobWV0YSk7DQogICAgICB9DQoNCg0KICAgICAgbG9hZGluZ0Jhci5zdHlsZS5kaXNwbGF5ID0gImJsb2NrIjsNCg0KICAgICAgdmFyIHNjcmlwdCA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoInNjcmlwdCIpOw0KICAgICAgc2NyaXB0LnNyYyA9IGxvYWRlclVybDsNCiAgICAgIHNjcmlwdC5vbmxvYWQgPSAoKSA9PiB7DQogICAgICAgIGNyZWF0ZVVuaXR5SW5zdGFuY2UoY2FudmFzLCBjb25maWcsIChwcm9ncmVzcykgPT4gew0KICAgICAgICAgIHByb2dyZXNzQmFyRnVsbC5zdHlsZS53aWR0aCA9IDEwMCAqIHByb2dyZXNzICsgIiUiOw0KICAgICAgICB9KS50aGVuKCh1bml0eUluc3RhbmNlKSA9PiB7DQogICAgICAgICAgbG9hZGluZ0Jhci5zdHlsZS5kaXNwbGF5ID0gIm5vbmUiOw0KICAgICAgICAgIGxvYWRpbmdUZXh0LnJlbW92ZSgpOw0KICAgICAgICB9KS5jYXRjaCgobWVzc2FnZSkgPT4gew0KICAgICAgICAgIGFsZXJ0KG1lc3NhZ2UpOw0KICAgICAgICB9KTsNCiAgICAgIH07DQogICAgICBkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKHNjcmlwdCk7DQogICAgfSkoKTsNCiAgICA8L3NjcmlwdD4NCiAgPC9ib2R5Pg0KPC9odG1sPg=='; function decodeGameHTML() { try { return atob(ENCODED_HTML); } catch (e) { return ''; } } function refocusGame() { const iframe = document.getElementById("fr"); if (iframe && iframe.style.display !== "none") { iframe.focus(); } } function toggleBrowserFullscreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().then(() => { setTimeout(refocusGame, 100); }); } else { document.exitFullscreen().then(() => { setTimeout(refocusGame, 100); }); } } function PlayTo(button) { const iframe = document.getElementById("fr"); const gameHTML = decodeGameHTML(); if (!gameHTML) { alert('Could not load game content.'); return; } iframe.srcdoc = gameHTML; iframe.style.display = "block"; button.style.display = "none"; document.getElementById("unblocked-text").style.display = "none"; setTimeout(refocusGame, 500); } window.onload = function() { const overlay = document.getElementById('intro-text-overlay'); if (overlay) { setTimeout(() => { overlay.style.zIndex = "-1"; overlay.style.pointerEvents = "none"; overlay.style.backgroundColor = "transparent"; }, 2000); } }; <\\/script></body></html>\`;
+
+    const games = { 1: code1, 2: code2, 3: code3, 4: code4, 5: code5, 6: code6, 7: code7, 8: code8 };
+    window.loadGame = function(slotNum, btn, gameName) {
+        const iframe = document.getElementById('corner-' + slotNum);
+        const group = document.getElementById('group-' + slotNum);
+        const statusMsg = document.getElementById('status-' + slotNum);
+        iframe.srcdoc = games[slotNum] || "";
+        if(statusMsg) statusMsg.style.display = 'none';
+        if(!btn.classList.contains('active')) {
+            btn.classList.add('active');
+            btn.innerText = "RELOAD " + gameName;
+        }
+        if (!group.querySelector('.unload-btn')) {
+            const unloadBtn = document.createElement('button');
+            unloadBtn.className = 'unload-btn';
+            unloadBtn.innerText = 'X';
+            unloadBtn.onclick = function() {
+                iframe.srcdoc = "";
+                btn.classList.remove('active');
+                btn.innerText = "LOAD " + gameName;
+                unloadBtn.remove();
+                if(statusMsg) statusMsg.style.display = 'block';
+            };
+            group.appendChild(unloadBtn);
+        }
+    }
+<\/script>
+</body>
+</html>
+    `;
+    
+    const newWindow = window.open('New Tab', '_blank');
+    if (newWindow) {
+        newWindow.document.open();
+        newWindow.document.write(loaderCode);
+        newWindow.document.close();
+    } else {
+        alert("Please allow pop-ups for this site to open the loader.");
+    }
+}
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
